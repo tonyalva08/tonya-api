@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/tonyalva/Desktop/Tony_Alva/00_Projects/45_Tonya/api", "run", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/tonyalva/Desktop/Tony_Alva/00_Projects/45_Tonya/web", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}

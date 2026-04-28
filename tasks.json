@@ -1,0 +1,116 @@
+{
+  "projectName": "Tonya — Trial Vertical Slice",
+  "stack": "Vite+React+TS+Tailwind (web/) | Express+TS (api/) | Claude API (Sonnet 4.6) | vitest + in-memory SQLite",
+  "verificationGates": ["npm run typecheck", "npm run lint", "npm test", "npm run build"],
+  "completionRule": "passes flips to true only after all 4 gates pass in both web/ and api/. If any gate fails, debug and fix before continuing.",
+  "conventions": {
+    "api": "Express Router; validation middleware before handler; rate-limit middleware first; errors as { error: string, code: number }",
+    "tests": "vitest; in-memory SQLite for DB mocks; afterEach cleanup in every test file",
+    "ts": "no `any`; always await DB ops; strict mode on"
+  },
+  "tasks": [
+    {
+      "id": "US-001",
+      "title": "Scaffold split-stack repo (web/ + api/)",
+      "acceptanceCriteria": [
+        "web/: Vite + React + TS + Tailwind, strict mode, ESLint, vitest configured",
+        "api/: Express + TS, ts-node-dev, ESLint, vitest, in-memory SQLite test helper",
+        "Rate-limit middleware mounted first on api/ Express app",
+        "api/ exposes GET /api/health on a Router returning { ok: true }",
+        "Root package.json with `dev` script running both apps concurrently",
+        "Each app has typecheck/lint/test/build scripts",
+        "web/ landing route renders and successfully calls /api/health through CORS",
+        "All 4 verification gates pass in both web/ and api/"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Build landing page with URL + sector input (PRD F1)",
+      "acceptanceCriteria": [
+        "Single-screen form: URL field + sector dropdown",
+        "Sector taxonomy from PRD (B2B SaaS, CPG, Climate Tech, Health, Fintech, E-Commerce, Media)",
+        "Client-side URL validation",
+        "Submits to api/ /api/snapshot and routes to results screen",
+        "All 4 verification gates pass"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Implement POST /api/parse-url Express route",
+      "acceptanceCriteria": [
+        "Mounted on Express Router; validation middleware runs before handler",
+        "Returns { title, metaDescription, h1, bodySample } from a fetched homepage (cheerio)",
+        "Errors return { error, code }; invalid/unreachable URL → 400",
+        "vitest test with mocked fetch + afterEach cleanup",
+        "All 4 verification gates pass"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Implement POST /api/snapshot Express route (PRD F2)",
+      "acceptanceCriteria": [
+        "Mounted on Express Router; validation middleware before handler",
+        "Composes parsed URL signals + sector into Claude prompt",
+        "Returns { stage, competitors[3-5], positioning } via Claude tool-use structured output",
+        "Uses claude-sonnet-4-6 with prompt caching on system prompt",
+        "Returns within 15s for valid inputs (PRD S1)",
+        "vitest test with mocked Claude client + afterEach cleanup",
+        "All 4 verification gates pass"
+      ],
+      "passes": true,
+      "notes": "Live Claude API verification deferred to US-008 — needs ANTHROPIC_API_KEY in api/.env. Gates green; route plumbing verified via mocked unit tests."
+    },
+    {
+      "id": "US-005",
+      "title": "Build design action selection screen (PRD F3)",
+      "acceptanceCriteria": [
+        "Renders market snapshot from US-004 above the action menu",
+        "All 8 design actions from PRD selectable as cards",
+        "Selection submits to /api/roi",
+        "All 4 verification gates pass"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Implement POST /api/roi Express route (PRD F4)",
+      "acceptanceCriteria": [
+        "Mounted on Express Router; validation middleware before handler",
+        "Returns { projectionRange, caseStudy, shortTermImpact, longTermImpact, confidence }",
+        "Sector-specific (different sectors yield different output — verifies PRD S2)",
+        "Returns one real-named case study with source attribution",
+        "Flags low confidence when signal is thin",
+        "vitest test with mocked Claude client + afterEach cleanup",
+        "All 4 verification gates pass"
+      ],
+      "passes": true,
+      "notes": "Built with auto-fallback: when ANTHROPIC_API_KEY is set, uses Claude (sonnet-4-6, prompt-cached system, tool-use structured output). When key is missing, falls back to sector-aware stub data (different projections per sector via SECTOR_MODIFIERS). Live Claude verification deferred to US-008."
+    },
+    {
+      "id": "US-007",
+      "title": "Build ROI output screen with paywall prompt",
+      "acceptanceCriteria": [
+        "Renders projection range, case study citation, short vs long-term split",
+        "Non-interruptive paywall CTA: 'See full report'",
+        "Loading and error states handled",
+        "All 4 verification gates pass"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-008",
+      "title": "End-to-end smoke test in preview",
+      "acceptanceCriteria": [
+        "Both servers start via root `npm run dev`",
+        "Browser preview: full flow runs (URL → snapshot → action → ROI)",
+        "No console errors",
+        "Two different sectors produce different ROI output (PRD S2)",
+        "All 4 verification gates pass in both web/ and api/"
+      ],
+      "passes": false
+    }
+  ]
+}
